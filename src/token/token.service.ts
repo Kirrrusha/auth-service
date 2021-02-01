@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { TokenRepository } from './token.repository';
 import { CreateUserTokenDto } from './dto/create-user-token.dto';
 import { ITokenPayload, ITokenResponse } from './interfaces/token-payload.interface';
-import { SignOptions } from 'jsonwebtoken';
+import { DecodeOptions, SignOptions } from 'jsonwebtoken';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -17,7 +17,7 @@ export class TokenService {
   }
 
   async createToken(payload: CreateUserTokenDto): Promise<ITokenResponse> {
-    const expiresIn = 60 * 60 * 4; // 4 hours
+    const expiresIn = 60 * 60 * 0.5; // 0.5 hours
     const tokenPayload = {
       id: payload.userId,
       status: payload.status,
@@ -31,7 +31,11 @@ export class TokenService {
     }
   }
 
-  private async generateToken(data: ITokenPayload, options?: SignOptions): Promise<string> {
+  async generateToken(data: ITokenPayload, options?: SignOptions): Promise<string> {
     return this.jwtService.sign(data, options);
+  }
+
+  async decodeToken(token: string, options?: DecodeOptions): Promise<any> {
+    return this.jwtService.decode(token, options);
   }
 }

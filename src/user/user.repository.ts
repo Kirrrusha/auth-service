@@ -1,4 +1,4 @@
-import { Repository, EntityRepository } from 'typeorm';
+import { Repository, EntityRepository, getRepository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { IUser } from './interfaces/user.interface';
@@ -47,7 +47,16 @@ export class UserRepository extends Repository<User> {
     }
 
     async findById(id: number): Promise<IUser> {
-      return await this.findOne({ id });
+        console.log(await this.findOne(id));
+      return await this.findOne(id);
+    }
+
+    async verifyUser({id, status}): Promise<boolean> {
+        StatusEnum.pending === status && await getRepository(User).createQueryBuilder().update()
+        .set({ status: StatusEnum.active })
+        .where("id = :id", { id })
+        .execute()
+        return true
     }
 
     async findByEmail(email: string): Promise<IUser> {
@@ -60,6 +69,11 @@ export class UserRepository extends Repository<User> {
         user.username = payload.username;
         await user.save();
         return user
+    }
+
+    async deleteUser(id: number) {
+        await this.delete(id)
+        return true
     }
 
 }

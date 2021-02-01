@@ -15,7 +15,6 @@ export class TokenRepository extends Repository<Token> {
 
     token.refreshToken = uuidv4()
     token.userId = createUserTokenDto.userId
-    console.log('token', token);
     await token.save()
     return token
 

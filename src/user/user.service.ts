@@ -22,6 +22,10 @@ export class UserService {
     return this.userRepository.getAll()
   }
 
+  async deleteById(id: number): Promise<boolean> {
+    return this.userRepository.deleteUser(id)
+  }
+
   // async signUp(authCredentialsDto: AuthCredentialsDto): Promise<void> {
   //   return this.userRepository.signUp(authCredentialsDto);
   // }

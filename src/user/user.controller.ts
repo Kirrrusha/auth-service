@@ -1,10 +1,9 @@
-import { Body, Controller, Post, Get } from '@nestjs/common';
+import {Body, Controller, Post, Get, Delete, Param, Query} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import {User} from './user.entity';
 
-@ApiTags('users')
-@Controller('user')
+@Controller('users')
 export class UserController {
 
   constructor(private userService: UserService) {}
@@ -19,5 +18,12 @@ export class UserController {
     @Body() payload: CreateUserDto
   ) {
     return this.userService.createUser(payload)
+  }
+
+  @Delete(':id')
+  deleteUser(
+    @Param('id') id: number
+  ) {
+    return this.userService.deleteById(id)
   }
 }
