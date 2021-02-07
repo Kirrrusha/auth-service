@@ -4,17 +4,19 @@ import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserRepository } from 'src/user/user.repository';
 import { JwtService } from '@nestjs/jwt';
-import { JwtPayload } from './interfaces';
-import {ITokenResponse} from '../token/interfaces/token-payload.interface';
+import {ITokenPayload, ITokenResponse} from '../token/interfaces/token-payload.interface';
 import { TokenRepository } from 'src/token/token.repository';
 import {User} from '../user/user.entity';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import {TokenService} from '../token/token.service';
 import {MailService} from '../mail/mail.service';
+import {RefreshTokenDto} from '../token/dto/refresh-token.dto';
+import * as moment from 'moment';
 
 @Injectable()
 export class AuthService {
   private readonly backendAppUrl: string;
+  private readonly maxSessionCount: number;
 
   constructor(
     @InjectRepository(UserRepository)
@@ -26,6 +28,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {
     this.backendAppUrl = this.configService.get<string>('BE_API_URL');
+    this.maxSessionCount = this.configService.get<number>('MAX_SESSION_COUNT');
   }
 
   async signUp(createUserDto: CreateUserDto) {
@@ -37,23 +40,45 @@ export class AuthService {
     }
   }
 
-  async signIn(authCredentialsDto: AuthCredentialsDto): Promise<{ accessToken: string }> {
-    const username = await this.userRepository.validateUserPassword(authCredentialsDto);
+  async signIn(authCredentialsDto: AuthCredentialsDto): Promise<ITokenResponse> {
+    const user = await this.userRepository.validateUserPassword(authCredentialsDto);
 
-    if (!username) {
+    if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload: JwtPayload = { username };
-    const accessToken = await this.jwtService.sign(payload);
+    const tokens = await this.tokenRepository.findByUserId(user.id)
 
-    return { accessToken };
+    if (tokens.length > this.maxSessionCount) {
+      this.logout()
+    }
+
+    const {id: userId} = user
+
+    const payload: ITokenPayload = { id: userId };
+    const {refreshToken} = await this.tokenRepository.createRefreshToken(userId);
+    const accessToken = await this.tokenService.generateToken(payload);
+
+    return { accessToken, refreshToken };
   }
 
-  async refreshToken(refreshToken: string): Promise<ITokenResponse> {
+  async refreshToken(payload: RefreshTokenDto): Promise<ITokenResponse> {
+    const {expireAt, fingerprint, userId} = await this.tokenRepository.findRefreshToken(payload.refreshToken)
+    await this.tokenRepository.deleteToken(payload.refreshToken)
+    if (!moment().isAfter(expireAt)) {
+      new UnauthorizedException('TOKEN_EXPIRED')
+    }
+
+    if (fingerprint !== payload.fingerprint) {
+      new UnauthorizedException('INVALID_REFRESH_SESSION')
+    }
+    const {refreshToken} = await this.tokenRepository.createRefreshToken(userId)
+    const tokenPayload: ITokenPayload = { id: userId };
+    const accessToken = await this.tokenService.generateToken(tokenPayload);
+
     return {
-      refreshToken: '',
-      accessToken: ''
+      refreshToken,
+      accessToken
     }
   }
 
@@ -80,5 +105,9 @@ export class AuthService {
                 <p>Please use this <a href="${confirmLink}">link</a> to confirm your account.</p>
             `,
     });
+  }
+
+  logout() {
+    console.log('logout')
   }
 }

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { AuthCredentialsDto } from '../auth/dto/auth-credentials.dto';
 import { UserRepository } from './user.repository';
-import { JwtPayload } from '../auth/interfaces';
+import { IJwtPayload } from '../auth/interfaces';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './user.entity';
 

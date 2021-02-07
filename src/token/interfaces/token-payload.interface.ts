@@ -1,7 +1,7 @@
 export interface ITokenPayload {
     id: number
-    status: string
-    roles?: string
+    status?: string
+    role?: string
 }
 
 export interface ITokenResponse {

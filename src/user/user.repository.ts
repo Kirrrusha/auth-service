@@ -27,12 +27,11 @@ export class UserRepository extends Repository<User> {
         return user
     }
 
-    async validateUserPassword(authCredentialsDto: AuthCredentialsDto): Promise<string> {
+    async validateUserPassword(authCredentialsDto: AuthCredentialsDto): Promise<User> {
         const { username, password } = authCredentialsDto;
-        const user = await this.findOne({ username });
-
+        const user = await getRepository(User).findOne({username});
         if (user && await user.validatePassword(password)) {
-            return user.username;
+            return user;
         } else {
             return null;
         }
@@ -47,7 +46,6 @@ export class UserRepository extends Repository<User> {
     }
 
     async findById(id: number): Promise<IUser> {
-        console.log(await this.findOne(id));
       return await this.findOne(id);
     }
 

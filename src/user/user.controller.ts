@@ -13,12 +13,12 @@ export class UserController {
     return this.userService.getAll()
   }
 
-  @Post()
-  createUser(
-    @Body() payload: CreateUserDto
-  ) {
-    return this.userService.createUser(payload)
-  }
+  // @Post()
+  // createUser(
+  //   @Body() payload: CreateUserDto
+  // ) {
+  //   return this.userService.createUser(payload)
+  // }
 
   @Delete(':id')
   deleteUser(

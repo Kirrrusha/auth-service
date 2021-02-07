@@ -26,7 +26,6 @@ export class User extends BaseEntity {
     status: StatusEnum.pending | StatusEnum.blocked | StatusEnum.active;
 
     async validatePassword(password: string): Promise<boolean> {
-        const hash = await bcrypt.hash(password, await bcrypt.genSalt(this.saltRounds));
-        return hash === this.password;
+        return bcrypt.compare(password, this.password);
     }
 }
